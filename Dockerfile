@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:bullseye AS builder
 LABEL MAINTAINER="roman@misakai.com"
 
 # Copy the directory into the container outside of the gopath
@@ -7,13 +7,15 @@ WORKDIR /go-build/src/github.com/emitter-io/emitter/
 ADD . /go-build/src/github.com/emitter-io/emitter/
 
 # Download and install any required third party dependencies into the container.
-RUN apk add --no-cache git g++ \
-  && go install \
-  && apk del g++
+RUN apt update && \
+    apt install -y git g++ && \
+    go install
 
 # Base image for runtime
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+FROM debian:bullseye-slim
+RUN apt update && \
+    apt install -y ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/
 # Get the executable binary from build-img declared previously
